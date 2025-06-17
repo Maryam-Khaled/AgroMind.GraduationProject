@@ -89,7 +89,9 @@ namespace AgroMind.GP.APIs
 						"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your Vercel domain
 						"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your Vercel domain with HTTPS
 						"http://localhost:3000", // For local development
-						"https://localhost:3000" // For local development with HTTPS
+						"https://localhost:3000", // For local development with HTTPS
+						"http://localhost:5132", // For local backend development
+						"https://localhost:7057" // For local backend development with HTTPS
 					)
 					.AllowAnyMethod()
 					.AllowAnyHeader()
