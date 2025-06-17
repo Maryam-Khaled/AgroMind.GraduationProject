@@ -101,8 +101,10 @@ namespace AgroMind.GP.APIs
 				options.AddPolicy("AllowVercel",
 					builder => builder
 					.WithOrigins(
-						"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your Vercel domain
-						"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your Vercel domain with HTTPS
+						"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your old Vercel domain
+						"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your old Vercel domain with HTTPS
+						"http://work-space-agromind.vercel.app", // Your new Vercel domain
+						"https://work-space-agromind.vercel.app", // Your new Vercel domain with HTTPS
 						"http://localhost:3000", // For local development
 						"https://localhost:3000", // For local development with HTTPS
 						"http://localhost:5132", // For local backend development
