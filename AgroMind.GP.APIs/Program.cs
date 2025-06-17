@@ -49,8 +49,8 @@ namespace AgroMind.GP.APIs
 			//});
 			builder.Services.AddIdentityServices(builder.Configuration); //Extension Method have Services of Identity
 			#endregion
-			//builder.Services.AddScoped<ICartRepository, CartRepository>();
-			// Make Redis optional for Azure deployment
+
+			// Register CartRepository service
 			builder.Services.AddSingleton<IConnectionMultiplexer>(Options =>
 			{
 				var connection = builder.Configuration.GetConnectionString("RedisConnection");
@@ -71,6 +71,9 @@ namespace AgroMind.GP.APIs
 					return null;
 				}
 			});
+
+			// Register CartRepository service
+			builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 			//builder.Services.AddScoped<IGenericRepositories<Product, int>, GenericRepository<Product, int>>();
 
