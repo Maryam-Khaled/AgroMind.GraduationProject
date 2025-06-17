@@ -174,8 +174,8 @@ namespace AgroMind.GP.APIs
 			app.UseSwagger();
 			app.UseSwaggerUI();
 
+			app.UseCors("AllowVercel"); // Place CORS BEFORE other middleware
 			app.UseHttpsRedirection();// Redirects HTTP to HTTPS
-			app.UseCors("AllowVercel"); // Place CORS
 
 			app.UseRouting();
 
