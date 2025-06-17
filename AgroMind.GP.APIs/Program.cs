@@ -50,14 +50,26 @@ namespace AgroMind.GP.APIs
 			builder.Services.AddIdentityServices(builder.Configuration); //Extension Method have Services of Identity
 			#endregion
 			//builder.Services.AddScoped<ICartRepository, CartRepository>();
+			// Make Redis optional for Azure deployment
 			builder.Services.AddSingleton<IConnectionMultiplexer>(Options =>
 			{
 				var connection = builder.Configuration.GetConnectionString("RedisConnection");
 				if (string.IsNullOrWhiteSpace(connection))
 				{
-					throw new InvalidOperationException("Redis connection string 'RedisConnection' is not configured.");
+					// Return a dummy connection or skip Redis for now
+					// In production, you should set up Azure Redis Cache
+					Console.WriteLine("WARNING: Redis connection not configured. Cart functionality will be disabled.");
+					return null;
 				}
-				return ConnectionMultiplexer.Connect(connection);
+				try
+				{
+					return ConnectionMultiplexer.Connect(connection);
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"WARNING: Could not connect to Redis: {ex.Message}. Cart functionality will be disabled.");
+					return null;
+				}
 			});
 
 			//builder.Services.AddScoped<IGenericRepositories<Product, int>, GenericRepository<Product, int>>();

@@ -1,4 +1,4 @@
-const BASE_URL = "https://localhost:7057/api";
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5132"}/api`;
 
 export const addCrop = async (cropData) => {
   const response = await fetch(`${BASE_URL}/Crop/AddCrop`, {

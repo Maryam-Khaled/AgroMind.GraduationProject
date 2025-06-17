@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 
 namespace AgroMind.GP.Repository.Repositories
 {
-    //JsonSerializer: Built-in .NET tool for handling JSON operations.
+	//JsonSerializer: Built-in .NET tool for handling JSON operations.
 
 
-    //KeyDeleteAsync: Deletes a Redis key
-    //StringGetAsync: Retrieves the value of a key as a string
-    //StringSetAsync: Stores a key-value pair, with an optional expiration time
-    public class CartRepository : ICartRepository
+	//KeyDeleteAsync: Deletes a Redis key
+	//StringGetAsync: Retrieves the value of a key as a string
+	//StringSetAsync: Stores a key-value pair, with an optional expiration time
+	public class CartRepository : ICartRepository
 	{
 		private readonly IDatabase _database;
 
@@ -28,8 +28,14 @@ namespace AgroMind.GP.Repository.Repositories
 		//It manages connections to a Redis .
 		public CartRepository(IConnectionMultiplexer redis) //Ask CLR for Object for Class Implement interface IConnectionMultiplexer
 		{
-			_database = redis.GetDatabase();//gets an interface to a Redis database
-
+			if (redis != null)
+			{
+				_database = redis.GetDatabase();//gets an interface to a Redis database
+			}
+			else
+			{
+				_database = null; // Redis not available
+			}
 		}
 
 		public async Task<bool> DeleteCartAsync(string FarmerId)
@@ -37,8 +43,11 @@ namespace AgroMind.GP.Repository.Repositories
 			if (string.IsNullOrWhiteSpace(FarmerId))
 				throw new ArgumentException("Cart ID cannot be null or empty.", nameof(FarmerId));
 
+			if (_database == null)
+				return false; // Redis not available
+
 			return await _database.KeyDeleteAsync(FarmerId); //KeyDeleteAsync bta5od rediusKey(CartId)
-														   //Redis keys represent the stored cart objects
+															 //Redis keys represent the stored cart objects
 		}
 
 		//Redis Values >- Stored as Json
@@ -47,19 +56,22 @@ namespace AgroMind.GP.Repository.Repositories
 			if (string.IsNullOrWhiteSpace(FarmerId))
 				throw new ArgumentException("Cart ID cannot be null or empty");
 
+			if (_database == null)
+				return new Cart(FarmerId); // Return empty cart if Redis not available
+
 			var cart = await _database.StringGetAsync(FarmerId); //redis Value  //as json
 																 // convert json To Cart
 																 //if (basket.IsNull) return null; // Law El id el b3toh Not there
 																 //else convert json into object or valueType
 			if (cart.IsNullOrEmpty)
-				return new Cart(FarmerId); // Return empty cart if not found	
+				return new Cart(FarmerId); // Return empty cart if not found
 			try
 			{
 				return JsonSerializer.Deserialize<Cart>(cart);  //convert json into object or valueType
 			}
 			catch (JsonException ex)
 			{
-				// Log the exception 
+				// Log the exception
 				Console.WriteLine($"Error deserializing cart data: {ex.Message}");
 				return null;
 			}
@@ -67,7 +79,7 @@ namespace AgroMind.GP.Repository.Repositories
 
 		public async Task<Cart?> RemoveFromCart(string FarmerId, int ItemId)
 		{
-			var Cart= await GetCartAsync(FarmerId);
+			var Cart = await GetCartAsync(FarmerId);
 			if (Cart is null) return null;
 
 			bool itemRemoved = Cart.Items.RemoveAll(item => item.Id == ItemId) > 0;
@@ -82,12 +94,16 @@ namespace AgroMind.GP.Repository.Repositories
 
 			if (cart == null || string.IsNullOrEmpty(cart.FarmerId))
 				throw new ArgumentException("Invalid Cart Data");
+
+			if (_database == null)
+				return cart; // Return the cart as-is if Redis not available
+
 			try
 			{
 				var CartJson = JsonSerializer.Serialize(cart); //convert from object to Json to store in redis
 				bool isSaved = await _database.StringSetAsync(cart.FarmerId, CartJson, TimeSpan.FromDays(5)); //Stores the serialized JSON string in Redis //RedisKey>id bta3 el cart ,jsoncart >"el cart after serialize
 																											  //expire time for object
-				return isSaved ?  await GetCartAsync(cart.FarmerId): null;  //get cart after update or create																		//StringSetAsync>- b t return boolean
+				return isSaved ? await GetCartAsync(cart.FarmerId) : null;  //get cart after update or create																		//StringSetAsync>- b t return boolean
 			}
 			catch (Exception ex)
 			{
