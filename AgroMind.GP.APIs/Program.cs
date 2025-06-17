@@ -15,7 +15,7 @@ using StackExchange.Redis;
 
 namespace AgroMind.GP.APIs
 {
-    public class Program
+	public class Program
 	{
 		public static async Task Main(string[] args)
 		{
@@ -28,7 +28,7 @@ namespace AgroMind.GP.APIs
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
-			builder.Services.AddHttpContextAccessor(); 
+			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddDbContext<AgroMindContext>(Options =>
 			{
 				//Configuration >- el property el maska el file el appsetting
@@ -83,18 +83,24 @@ namespace AgroMind.GP.APIs
 
 			builder.Services.AddCors(options =>
 			{
-				options.AddPolicy("AllowAll",
+				options.AddPolicy("AllowVercel",
 					builder => builder
-					.AllowAnyOrigin()
+					.WithOrigins(
+						"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your Vercel domain
+						"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your Vercel domain with HTTPS
+						"http://localhost:3000", // For local development
+						"https://localhost:3000" // For local development with HTTPS
+					)
 					.AllowAnyMethod()
-					.AllowAnyHeader());
+					.AllowAnyHeader()
+					.AllowCredentials()); // Allow credentials for authentication
 			});
 
 			//Add all services BEFORE builder.Build()
 
 			var app = builder.Build();
 
-			
+
 
 			#region Update DB
 			//To Allow CLR To Inject Object From AgroMindDbContext
@@ -103,12 +109,12 @@ namespace AgroMind.GP.APIs
 
 
 			var Services = Scope.ServiceProvider;
-			
+
 			var context = Services.GetRequiredService<AgroMindContext>();
 			var loggerFactory = Services.GetRequiredService<ILoggerFactory>();
 			//var logger = Services.GetRequiredService<ILogger<Program>>();
 			var logger = loggerFactory.CreateLogger<Program>();
-		
+
 			var roleManager = Services.GetRequiredService<RoleManager<IdentityRole>>();
 			var userManager = Services.GetRequiredService<UserManager<AppUser>>();
 
@@ -151,18 +157,18 @@ namespace AgroMind.GP.APIs
 				app.UseSwaggerUI();
 			}
 			app.UseHttpsRedirection();// Redirects HTTP to HTTPS
-			app.UseCors("AllowAll"); // Place CORS
+			app.UseCors("AllowVercel"); // Place CORS
 
-		
+
 			app.UseRouting();
-			
+
 			//app.UseStaticFiles();
 			app.UseAuthentication();// Processes JWT token
 			app.UseAuthorization();// Checks roles based on processed token
 			app.MapControllers();// Maps routes
 
 
-			
+
 
 
 			app.Run();
