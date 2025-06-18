@@ -71,7 +71,7 @@ namespace AgroMind.GP.APIs
 				options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
 			});
 
-			// ✅ UPDATED CORS POLICY
+			// UPDATED CORS POLICY
 			builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowVercel", policy =>
