@@ -99,17 +99,31 @@ namespace AgroMind.GP.APIs
 			{
 				options.AddPolicy("AllowVercel",
 					builder => builder
-					.WithOrigins(
-						"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your old Vercel domain
-						"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app", // Your old Vercel domain with HTTPS
-						"http://work-space-agromind.vercel.app", // Your new Vercel domain
-						"https://work-space-agromind.vercel.app", // Your new Vercel domain with HTTPS
-						"http://localhost:3000", // For local development
-						"https://localhost:3000", // For local development with HTTPS
-						"http://localhost:5132", // For local backend development
-						"https://localhost:7057", // For local backend development with HTTPS
-						"https://work-space-agromind-pygnysczd-maryam-khaled-abobakrs-projects.vercel.app" // <-- Added your current Vercel deployment
-					)
+					.SetIsOriginAllowed(origin =>
+					{
+						var allowedOrigins = new[]
+						{
+							"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
+							"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
+							"http://work-space-agromind.vercel.app",
+							"https://work-space-agromind.vercel.app",
+							"http://localhost:3000",
+							"https://localhost:3000",
+							"http://localhost:5132",
+							"https://localhost:7057",
+							"https://work-space-agromind-pygnysczd-maryam-khaled-abobakrs-projects.vercel.app"
+						};
+						if (allowedOrigins.Contains(origin))
+						{
+							return true;
+						}
+						// Allow any subdomain from your vercel project
+						if (System.Text.RegularExpressions.Regex.IsMatch(origin, @"^https://work-space-agromind-.*-maryam-khaled-abobakrs-projects\.vercel\.app$"))
+						{
+							return true;
+						}
+						return false;
+					})
 					.AllowAnyMethod()
 					.AllowAnyHeader()
 					.AllowCredentials()); // Allow credentials for authentication
