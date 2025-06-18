@@ -79,11 +79,14 @@ namespace AgroMind.GP.APIs
 		policy
 			.SetIsOriginAllowed(origin =>
 			{
-				// Allow any subdomain under *.vercel.app
-				return origin != null && System.Text.RegularExpressions.Regex.IsMatch(
+				if (origin is null) return false;
+				// Allow any subdomain under *.vercel.app OR *.azurewebsites.net
+				return System.Text.RegularExpressions.Regex.IsMatch(
 					origin,
-					@"^https:\/\/.*\.vercel\.app$"
-				);
+					@"^https:\/\/.*\.vercel\.app$") ||
+					System.Text.RegularExpressions.Regex.IsMatch(
+					origin,
+					@"^https:\/\/.*\.azurewebsites\.net$");
 			})
 			.AllowAnyMethod()
 			.AllowAnyHeader()
