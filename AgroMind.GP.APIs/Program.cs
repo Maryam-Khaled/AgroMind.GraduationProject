@@ -73,36 +73,24 @@ namespace AgroMind.GP.APIs
 
 			// ✅ UPDATED CORS POLICY
 			builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowVercel", policy =>
+	{
+		policy
+			.SetIsOriginAllowed(origin =>
 			{
-				options.AddPolicy("AllowVercel",
-					policy => policy
-						.SetIsOriginAllowed(origin =>
-						{
-							var allowedOrigins = new[]
-							{
-								"https://work-space-agromind-atevlbs8o-maryam-khaled-abobakrs-projects.vercel.app", // ✅ newly added
-								"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
-								"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
-								"http://work-space-agromind.vercel.app",
-								"https://work-space-agromind.vercel.app",
-								"http://localhost:3000",
-								"https://localhost:3000",
-								"http://localhost:5132",
-								"https://localhost:7057",
-								"https://work-space-agromind-pygnysczd-maryam-khaled-abobakrs-projects.vercel.app"
-							};
+				// Allow any subdomain under *.vercel.app
+				return origin != null && System.Text.RegularExpressions.Regex.IsMatch(
+					origin,
+					@"^https:\/\/.*\.vercel\.app$"
+				);
+			})
+			.AllowAnyMethod()
+			.AllowAnyHeader()
+			.AllowCredentials();
+	});
+});
 
-							if (allowedOrigins.Contains(origin))
-								return true;
-
-							return System.Text.RegularExpressions.Regex.IsMatch(
-								origin,
-								@"^https://work-space-agromind-.*-maryam-khaled-abobakrs-projects\.vercel\.app$");
-						})
-						.AllowAnyMethod()
-						.AllowAnyHeader()
-						.AllowCredentials());
-			});
 
 			var app = builder.Build();
 
