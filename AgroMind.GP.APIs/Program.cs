@@ -20,43 +20,29 @@ namespace AgroMind.GP.APIs
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
-
 			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
 			builder.Services.AddHttpContextAccessor();
-			builder.Services.AddDbContext<AgroMindContext>(Options =>
-			{
-				//Configuration >- el property el maska el file el appsetting
-				Options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
+			builder.Services.AddDbContext<AgroMindContext>(options =>
+			{
+				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 			});
 
 			builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 			{
-				options.TokenLifespan = TimeSpan.FromHours(2); // Set your desired expiration
+				options.TokenLifespan = TimeSpan.FromHours(2);
 			});
-			#region IdentityServices
 
-			//builder.Services.AddDbContext<AppIdentityDbContext>(Options =>
-			//{
-			//	Options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
+			builder.Services.AddIdentityServices(builder.Configuration);
 
-			//});
-			builder.Services.AddIdentityServices(builder.Configuration); //Extension Method have Services of Identity
-			#endregion
-
-			// Register CartRepository service
-			builder.Services.AddSingleton<IConnectionMultiplexer>(Options =>
+			builder.Services.AddSingleton<IConnectionMultiplexer>(options =>
 			{
 				var connection = builder.Configuration.GetConnectionString("RedisConnection");
 				if (string.IsNullOrWhiteSpace(connection))
 				{
-					// Return a dummy connection or skip Redis for now
-					// In production, you should set up Azure Redis Cache
 					Console.WriteLine("WARNING: Redis connection not configured. Cart functionality will be disabled.");
 					return null!;
 				}
@@ -71,136 +57,90 @@ namespace AgroMind.GP.APIs
 				}
 			});
 
-			// Register CartRepository service
 			builder.Services.AddScoped<ICartRepository, CartRepository>();
-
-			//builder.Services.AddScoped<IGenericRepositories<Product, int>, GenericRepository<Product, int>>();
-
-			//This AddScoped For Generic to didn't Add Service for each Repository
 			builder.Services.AddScoped(typeof(IGenericRepositories<,>), typeof(GenericRepository<,>));
-			//builder.Services.AddAutoMapper(M => M.AddProfile(new MappingProfiles()));
 			builder.Services.AddAutoMapper(typeof(MappingProfiles));
-
 			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 			builder.Services.AddScoped<IServiceManager, ServiceManager>();
-			builder.Services.AddScoped<ITokenService, TokenService>(); //  to register TokenService
+			builder.Services.AddScoped<ITokenService, TokenService>();
 
-			builder.Services.AddControllers()
-	.AddJsonOptions(options =>
-	{
-		options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-		options.JsonSerializerOptions.PropertyNamingPolicy = null;
-		options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-		//options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonConverter<DateTime>());
-	});
+			builder.Services.AddControllers().AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+				options.JsonSerializerOptions.PropertyNamingPolicy = null;
+				options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+			});
 
+			// ✅ UPDATED CORS POLICY
 			builder.Services.AddCors(options =>
 			{
 				options.AddPolicy("AllowVercel",
-					builder => builder
-					.SetIsOriginAllowed(origin =>
-					{
-						var allowedOrigins = new[]
+					policy => policy
+						.SetIsOriginAllowed(origin =>
 						{
-							"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
-							"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
-							"http://work-space-agromind.vercel.app",
-							"https://work-space-agromind.vercel.app",
-							"http://localhost:3000",
-							"https://localhost:3000",
-							"http://localhost:5132",
-							"https://localhost:7057",
-							"https://work-space-agromind-pygnysczd-maryam-khaled-abobakrs-projects.vercel.app"
-						};
-						if (allowedOrigins.Contains(origin))
-						{
-							return true;
-						}
-						// Allow any subdomain from your vercel project
-						if (System.Text.RegularExpressions.Regex.IsMatch(origin, @"^https://work-space-agromind-.*-maryam-khaled-abobakrs-projects\.vercel\.app$"))
-						{
-							return true;
-						}
-						return false;
-					})
-					.AllowAnyMethod()
-					.AllowAnyHeader()
-					.AllowCredentials()); // Allow credentials for authentication
-			});
+							var allowedOrigins = new[]
+							{
+								"https://work-space-agromind-atevlbs8o-maryam-khaled-abobakrs-projects.vercel.app", // ✅ newly added
+								"http://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
+								"https://work-space-agromind-82bke0n9m-maryam-khaled-abobakrs-projects.vercel.app",
+								"http://work-space-agromind.vercel.app",
+								"https://work-space-agromind.vercel.app",
+								"http://localhost:3000",
+								"https://localhost:3000",
+								"http://localhost:5132",
+								"https://localhost:7057",
+								"https://work-space-agromind-pygnysczd-maryam-khaled-abobakrs-projects.vercel.app"
+							};
 
-			//Add all services BEFORE builder.Build()
+							if (allowedOrigins.Contains(origin))
+								return true;
+
+							return System.Text.RegularExpressions.Regex.IsMatch(
+								origin,
+								@"^https://work-space-agromind-.*-maryam-khaled-abobakrs-projects\.vercel\.app$");
+						})
+						.AllowAnyMethod()
+						.AllowAnyHeader()
+						.AllowCredentials());
+			});
 
 			var app = builder.Build();
 
-
-
 			#region Update DB
-			//To Allow CLR To Inject Object From AgroMindDbContext
-			using var Scope = app.Services.CreateScope(); //Cretae Scope : is Container has Servises Of LifeTime Type :Scoped
-														  //Like :AgroMindDbContext() "Act Db"
+			using var scope = app.Services.CreateScope();
+			var services = scope.ServiceProvider;
 
-
-			var Services = Scope.ServiceProvider;
-
-			var context = Services.GetRequiredService<AgroMindContext>();
-			var loggerFactory = Services.GetRequiredService<ILoggerFactory>();
-			//var logger = Services.GetRequiredService<ILogger<Program>>();
+			var context = services.GetRequiredService<AgroMindContext>();
+			var loggerFactory = services.GetRequiredService<ILoggerFactory>();
 			var logger = loggerFactory.CreateLogger<Program>();
 
-			var roleManager = Services.GetRequiredService<RoleManager<IdentityRole>>();
-			var userManager = Services.GetRequiredService<UserManager<AppUser>>();
+			var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+			var userManager = services.GetRequiredService<UserManager<AppUser>>();
 
-			//var validationKeyFromConfig = app.Configuration["JWT:key"]; // Use app.Configuration to access settings after build
-			//if (string.IsNullOrEmpty(validationKeyFromConfig))
-			//{
-			//	logger.LogError("Program.cs: JWT:key is missing or empty in the configuration for validation!");
-			//}
-			//else
-			//{
-			//	logger.LogInformation($"Program.cs: JWT Key from config for validation: '{validationKeyFromConfig}' (Length: {validationKeyFromConfig.Length})");
-			//}
-
-
-			try // if DB kant Mawgoda
+			try
 			{
-
-				await context.Database.MigrateAsync(); //Update-Database
+				await context.Database.MigrateAsync();
 
 				await AppIdentityDbContextSeed.SeedRolesAsync(roleManager, logger);
 				await AppIdentityDbContextSeed.SeedUserAsync(userManager, roleManager, logger);
-				await AgroContextSeed.SeedAsync(context); //Seeding Data
+				await AgroContextSeed.SeedAsync(context);
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex, "There Are Problems during Apply Migrations !");// What Message Act => LogError -> red and Message of error
+				logger.LogError(ex, "There Are Problems during Apply Migrations!");
 			}
 			#endregion
 
-
-			//builder.Logging.AddConsole();
-			//builder.Logging.SetMinimumLevel(LogLevel.Debug);
-
-
-
-			// Configure the HTTP request pipeline.
-			// Enable Swagger in all environments for now
 			app.UseSwagger();
 			app.UseSwaggerUI();
 
-			app.UseCors("AllowVercel"); // Place CORS BEFORE other middleware
-			app.UseHttpsRedirection();// Redirects HTTP to HTTPS
+			app.UseCors("AllowVercel"); // ✅ CORS should come BEFORE routing
 
+			app.UseHttpsRedirection();
 			app.UseRouting();
-
-			//app.UseStaticFiles();
-			app.UseAuthentication();// Processes JWT token
-			app.UseAuthorization();// Checks roles based on processed token
-			app.MapControllers();// Maps routes
-
-
-
-
+			app.UseAuthentication();
+			app.UseAuthorization();
+			app.MapControllers();
 
 			app.Run();
 		}
