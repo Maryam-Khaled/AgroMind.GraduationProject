@@ -1,4 +1,3 @@
-
 using AgroMind.GP.APIs.Extensions;
 using AgroMind.GP.APIs.Helpers;
 using AgroMind.GP.Core.Contracts.Repositories.Contract;
@@ -59,7 +58,7 @@ namespace AgroMind.GP.APIs
 					// Return a dummy connection or skip Redis for now
 					// In production, you should set up Azure Redis Cache
 					Console.WriteLine("WARNING: Redis connection not configured. Cart functionality will be disabled.");
-					return null;
+					return null!;
 				}
 				try
 				{
@@ -68,7 +67,7 @@ namespace AgroMind.GP.APIs
 				catch (Exception ex)
 				{
 					Console.WriteLine($"WARNING: Could not connect to Redis: {ex.Message}. Cart functionality will be disabled.");
-					return null;
+					return null!;
 				}
 			});
 
@@ -108,7 +107,8 @@ namespace AgroMind.GP.APIs
 						"http://localhost:3000", // For local development
 						"https://localhost:3000", // For local development with HTTPS
 						"http://localhost:5132", // For local backend development
-						"https://localhost:7057" // For local backend development with HTTPS
+						"https://localhost:7057", // For local backend development with HTTPS
+						"https://work-space-agromind-pygnysczd-maryam-khaled-abobakrs-projects.vercel.app" // <-- Added your current Vercel deployment
 					)
 					.AllowAnyMethod()
 					.AllowAnyHeader()
